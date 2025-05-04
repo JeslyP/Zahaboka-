@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Burger Joke</title> <style>
+    <title>What do you call a Burger with no bun?</title> <style>
     body {
         font-family: sans-serif;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start; /* Align items from the top */
         align-items: center;
         min-height: 100vh;
         margin: 0;
@@ -17,19 +17,26 @@
         padding: 20px; /* Add some padding */
         box-sizing: border-box; /* Include padding in element's total width and height */
     }
-    .joke-container {
-        background-color: #fff; /* White background for the joke box */
+    .container { /* Generic container class */
+        background-color: #fff; /* White background */
         padding: 30px; /* Increased padding */
         border-radius: 10px; /* Slightly more rounded corners */
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* More prominent shadow */
         max-width: 90%; /* Allow it to take more width on smaller screens */
         width: 500px; /* Max width on larger screens */
-        word-wrap: break-word; /* Ensures long jokes wrap */
+        word-wrap: break-word; /* Ensures long text wraps */
         box-sizing: border-box;
+        margin-bottom: 20px; /* Space between containers */
     }
     h1 {
         color: #333;
         margin-bottom: 20px; /* Space below heading */
+        font-size: 1.8em; /* Adjust heading size */
+    }
+    h2 {
+        color: #333;
+        margin-bottom: 15px; /* Space below heading */
+        font-size: 1.4em; /* Adjust heading size */
     }
     p {
         font-size: 1.3em; /* Slightly larger text */
@@ -47,8 +54,6 @@
         opacity: 0; /* Start completely transparent */
         visibility: hidden; /* Hide from view and screen readers initially */
         transition: opacity 0.8s ease-in-out; /* Smooth fade transition over 0.8 seconds */
-        /* You don't typically transition 'visibility' directly,
-           but changing it in tandem with opacity works for showing. */
     }
     /* Class to make the punchline visible */
     #punchline.visible {
@@ -74,11 +79,37 @@
     button:active {
         background-color: #004085; /* Darker on click */
     }
+
+    textarea {
+        width: calc(100% - 20px); /* Full width minus padding */
+        height: 150px; /* Fixed height */
+        padding: 10px;
+        margin-top: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-family: sans-serif;
+        font-size: 1em;
+        resize: vertical; /* Allow vertical resizing */
+        box-sizing: border-box;
+    }
+
+    #saveExplanationButton {
+        background-color: #ffc107; /* Yellow color for save */
+        color: #333;
+    }
+
+    #saveExplanationButton:hover {
+        background-color: #e0a800; /* Darker yellow on hover */
+    }
+    #saveExplanationButton:active {
+        background-color: #c69500; /* Darker on click */
+    }
+
 </style>
 </head>
 <body>
-<div class="joke-container">
-    <h1>The Burger Joke</h1> <p>
+<div class="container joke-container">
+    <h1>What do you call a Burger with no bun?</h1> <p>
     WHat do you call a Burger with no bun?
 </p>
     <div id="punchline">
@@ -87,7 +118,14 @@
     </div>
     <button id="revealButton">Tell me!</button> </div>
 
+<div class="container explanation-container">
+    <h2>That was Funny now EXPLAIN IT ‼</h2> <textarea id="explanationTextarea" placeholder="Type your explanation here..."></textarea>
+    <button id="saveExplanationButton">Save Explanation (in your browser)</button>
+</div>
+
+
 <script>
+    // --- Joke Reveal Script ---
     const revealButton = document.getElementById('revealButton');
     const punchlineDiv = document.getElementById('punchline');
 
@@ -97,6 +135,26 @@
         // Hide the button after clicking
         revealButton.style.display = 'none';
     });
+
+    // --- Explanation Save/Load Script ---
+    const explanationTextarea = document.getElementById('explanationTextarea');
+    const saveExplanationButton = document.getElementById('saveExplanationButton');
+    const localStorageKey = 'jokeExplanation'; // Key to use in localStorage
+
+    // Load saved explanation when the page loads
+    window.addEventListener('load', () => {
+        const savedExplanation = localStorage.getItem(localStorageKey);
+        if (savedExplanation) {
+            explanationTextarea.value = savedExplanation;
+        }
+    });
+
+    // Save explanation when the button is clicked
+    saveExplanationButton.addEventListener('click', () => {
+        localStorage.setItem(localStorageKey, explanationTextarea.value);
+        alert('Explanation saved in your browser!'); // Provide feedback
+    });
+
 </script>
 </body>
 </html>
