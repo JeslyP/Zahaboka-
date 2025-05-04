@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Joke Title Here</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0; /* Optional: Light grey background */
+            text-align: center;
+        }
+        .joke-container {
+            background-color: #fff; /* Optional: White background for the joke box */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Subtle shadow */
+            max-width: 80%;
+            word-wrap: break-word; /* Ensures long jokes wrap */
+        }
+        h1 {
+            color: #333;
+        }
+        p {
+            font-size: 1.2em;
+            line-height: 1.6;
+        }
+        #punchline-text { /* Style for the punchline text */
+            font-weight: bold;
+            color: #007bff; /* Optional: Highlight color for the punchline */
+        }
+        #punchline { /* Style for the punchline container */
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none; /* Style to hide the punchline initially */
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<div class="joke-container">
+    <h1>Your Joke Title or Setup</h1>
+    <p>
+        This is where the setup of your joke goes.
+        Like: Why did the scarecrow win an award?
+    </p>
+    <div id="punchline" class="hidden">
+        <p id="punchline-text">
+            This is where the punchline goes.
+            Like: Because he was outstanding in his field!
+        </p>
+    </div>
+    <button id="revealButton">Reveal Punchline</button>
+</div>
+
+<script>
+    const revealButton = document.getElementById('revealButton');
+    const punchlineDiv = document.getElementById('punchline');
+
+    revealButton.addEventListener('click', () => {
+        punchlineDiv.classList.remove('hidden');
+        revealButton.style.display = 'none'; // Hide the button after clicking
+    });
+</script>
+</body>
+</html>
