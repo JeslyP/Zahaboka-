@@ -3,195 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>What do you call a Burger with no bun?</title> <style>
-    body {
-        font-family: sans-serif;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start; /* Align items from the top */
-        align-items: center;
-        min-height: 100vh;
-        margin: 0;
-        background-color: #f0f0f0; /* Light grey background */
-        text-align: center;
-        padding: 20px; /* Add some padding */
-        box-sizing: border-box; /* Include padding in element's total width and height */
-    }
-    .container { /* Generic container class */
-        background-color: #fff; /* White background */
-        padding: 30px; /* Increased padding */
-        border-radius: 10px; /* Slightly more rounded corners */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* More prominent shadow */
-        max-width: 90%; /* Allow it to take more width on smaller screens */
-        width: 500px; /* Max width on larger screens */
-        word-wrap: break-word; /* Ensures long text wraps */
-        box-sizing: border-box;
-        margin-bottom: 20px; /* Space between containers */
-    }
-    h1 {
-        color: #333;
-        margin-bottom: 20px; /* Space below heading */
-        font-size: 1.8em; /* Adjust heading size */
-    }
-    h2 {
-        color: #333;
-        margin-bottom: 15px; /* Space below heading */
-        font-size: 1.4em; /* Adjust heading size */
-    }
-    p {
-        font-size: 1.3em; /* Slightly larger text */
-        line-height: 1.7;
-        color: #555;
-        margin-bottom: 15px; /* Space below setup */
-    }
-    #punchline-text {
-        font-weight: bold;
-        color: #28a745; /* A green color for the punchline */
-    }
-    #punchline {
-        margin-top: 20px;
-        /* --- Styles for hiding and transition --- */
-        opacity: 0; /* Start completely transparent */
-        visibility: hidden; /* Hide from view and screen readers initially */
-        transition: opacity 0.8s ease-in-out; /* Smooth fade transition over 0.8 seconds */
-    }
-    /* Class to make the punchline visible */
-    #punchline.visible {
-        opacity: 1; /* Make it fully visible */
-        visibility: visible; /* Make it visible */
-    }
+    <title>What do you call a Burger with no bun?</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            max-width: 90%;
+            width: 500px;
+            word-wrap: break-word;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        h2 {
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+        p {
+            font-size: 1.3em;
+            line-height: 1.7;
+            color: #555;
+            margin-bottom: 15px;
+        }
+        #punchline-text {
+            font-weight: bold;
+            color: #28a745;
+        }
+        #punchline {
+            margin-top: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease-in-out;
+        }
+        #punchline.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        button {
+            margin-top: 25px;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            transition: background-color 0.3s ease;
+            outline: none;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        button:active {
+            background-color: #1e7e34;
+        }
+        textarea {
+            width: calc(100% - 20px);
+            height: 150px;
+            padding: 10px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-family: sans-serif;
+            font-size: 1em;
+            resize: vertical;
+            box-sizing: border-box;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #explanationDisplay {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #e9ecef;
+            border: 1px dashed #ced4da;
+            border-radius: 8px;
+            text-align: left;
+            color: #495057;
+            line-height: 1.6;
+            min-height: 1.6em;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            max-width: 90%;
+            width: 500px;
+            box-sizing: border-box;
+        }
+        #explanationDisplay:empty::before {
+            content: "Your explanation will appear here as you type...";
+            color: #888;
+        }
+        #explanationSection {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #explanationSection.visible {
+            opacity: 1;
+            visibility: visible;
+        }
 
-    button {
-        margin-top: 25px; /* More space above button */
-        padding: 12px 25px; /* Larger button padding */
-        font-size: 1.1em;
-        cursor: pointer;
-        border: none;
-        border-radius: 5px;
-        background-color: #007bff;
-        color: white;
-        transition: background-color 0.3s ease;
-        outline: none; /* Remove focus outline */
-    }
-    button:hover {
-        background-color: #0056b3;
-    }
-    button:active {
-        background-color: #004085; /* Darker on click */
-    }
-
-    textarea {
-        width: calc(100% - 20px); /* Full width minus padding */
-        height: 150px; /* Fixed height */
-        padding: 10px;
-        margin-top: 10px;
-        margin-bottom: 20px; /* Space below textarea */
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        font-family: sans-serif;
-        font-size: 1em;
-        resize: vertical; /* Allow vertical resizing */
-        box-sizing: border-box;
-        display: block; /* Make textarea a block element */
-        margin-left: auto; /* Center textarea */
-        margin-right: auto; /* Center textarea */
-    }
-
-    #explanationDisplay {
-        margin-top: 20px; /* Space above display area */
-        padding: 20px;
-        background-color: #e9ecef; /* Light grey background */
-        border: 1px dashed #ced4da; /* Dashed border */
-        border-radius: 8px;
-        text-align: left; /* Align text left */
-        color: #495057;
-        line-height: 1.6;
-        min-height: 1.6em; /* Ensure some height even when empty */
-        word-wrap: break-word;
-        white-space: pre-wrap; /* Preserve line breaks from textarea */
-        max-width: 90%; /* Match container width */
-        width: 500px; /* Match container width */
-        box-sizing: border-box;
-    }
-
-    #explanationDisplay:empty::before {
-        content: "Your explanation will appear here as you type..."; /* Placeholder text when empty */
-        color: #888;
-    }
-
-    /* --- Style for hiding the entire explanation section --- */
-    #explanationSection {
-        opacity: 0; /* Start completely transparent */
-        visibility: hidden; /* Hide from view and screen readers initially */
-        transition: opacity 0.8s ease-in-out; /* Match punchline fade transition */
-        display: flex; /* Use flex to keep children in a column */
-        flex-direction: column;
-        align-items: center; /* Center children */
-    }
-
-    /* Class to make the explanation section visible */
-    #explanationSection.visible {
-        opacity: 1; /* Make it fully visible */
-        visibility: visible; /* Make it visible */
-    }
-
-
-</style>
+        /* Dark mode styles */
+        body.dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+        body.dark-mode .container {
+            background-color: #1e1e1e;
+            color: #ffffff;
+        }
+        body.dark-mode button {
+            background-color: #28a745;
+        }
+        body.dark-mode button:hover {
+            background-color: #218838;
+        }
+        body.dark-mode button:active {
+            background-color: #1e7e34;
+        }
+    </style>
 </head>
 <body>
+<button id="darkModeToggle">Toggle Dark Mode</button>
 <div class="container joke-container">
     <h1>WHAT DO YOU CALL A BURGER WITH NO BUN?</h1>
-    <div id="punchline">
-        <p id="punchline-text">
-            SNOOP DOGG ICE CREAM 😂😂 </p>
+    <div id="punchline" aria-live="polite">
+        <p id="punchline-text">SNOOP DOGG ICE CREAM 😂😂</p>
     </div>
-    <button id="revealButton">Tell me!</button> </div>
+    <button id="revealButton">Tell me!</button>
+</div>
 
 <div id="explanationSection">
     <div class="container explanation-container">
-        <h2>THAT WAS  FUNNY NOW EXPLAIN IT CHERI ‼</h2> <textarea id="explanationTextarea" placeholder="Type your explanation here..."></textarea>
+        <h2>THAT WAS FUNNY NOW EXPLAIN IT CHERI ‼</h2>
+        <textarea id="explanationTextarea" placeholder="Type your explanation here..."></textarea>
     </div>
-
-    <div id="explanationDisplay" class="container">
-    </div>
+    <div id="explanationDisplay" class="container" aria-live="polite"></div>
 </div>
 
-
 <script>
-    // --- Joke Reveal Script ---
     const revealButton = document.getElementById('revealButton');
     const punchlineDiv = document.getElementById('punchline');
-    // Get the new explanation section wrapper
     const explanationSection = document.getElementById('explanationSection');
-
-    revealButton.addEventListener('click', () => {
-        // Add the 'visible' class to trigger the CSS transition for the punchline
-        punchlineDiv.classList.add('visible');
-        // Hide the button after clicking
-        revealButton.style.display = 'none';
-
-        // --- Reveal the Explanation Section after a slight delay (optional) ---
-        // A slight delay can make the transitions look smoother,
-        // revealing the punchline, then the explanation section.
-        // Adjust the delay time (in milliseconds) as needed.
-        // If you want them to appear at the same time, remove the setTimeout.
-        setTimeout(() => {
-            explanationSection.classList.add('visible');
-        }, 500); // Reveal explanation section after 0.5 seconds
-        // If you want it instantly after punchline:
-        // explanationSection.classList.add('visible');
-
-    });
-
-    // --- Explanation Display Script ---
     const explanationTextarea = document.getElementById('explanationTextarea');
     const explanationDisplay = document.getElementById('explanationDisplay');
+    const darkModeToggle = document.getElementById('darkModeToggle');
 
-    // Display explanation as the user types
+    revealButton.addEventListener('click', () => {
+        punchlineDiv.classList.add('visible');
+        revealButton.style.display = 'none';
+        setTimeout(() => {
+            explanationSection.classList.add('visible');
+        }, 500);
+    });
+
     explanationTextarea.addEventListener('input', () => {
         explanationDisplay.textContent = explanationTextarea.value;
     });
 
+    darkModeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+    });
 </script>
 </body>
 </html>
