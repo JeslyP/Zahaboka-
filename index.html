@@ -85,25 +85,40 @@
         height: 150px; /* Fixed height */
         padding: 10px;
         margin-top: 10px;
+        margin-bottom: 20px; /* Space below textarea */
         border: 1px solid #ccc;
         border-radius: 5px;
         font-family: sans-serif;
         font-size: 1em;
         resize: vertical; /* Allow vertical resizing */
         box-sizing: border-box;
+        display: block; /* Make textarea a block element */
+        margin-left: auto; /* Center textarea */
+        margin-right: auto; /* Center textarea */
     }
 
-    #saveExplanationButton {
-        background-color: #ffc107; /* Yellow color for save */
-        color: #333;
+    #explanationDisplay {
+        margin-top: 20px; /* Space above display area */
+        padding: 20px;
+        background-color: #e9ecef; /* Light grey background */
+        border: 1px dashed #ced4da; /* Dashed border */
+        border-radius: 8px;
+        text-align: left; /* Align text left */
+        color: #495057;
+        line-height: 1.6;
+        min-height: 1.6em; /* Ensure some height even when empty */
+        word-wrap: break-word;
+        white-space: pre-wrap; /* Preserve line breaks from textarea */
+        max-width: 90%; /* Match container width */
+        width: 500px; /* Match container width */
+        box-sizing: border-box;
     }
 
-    #saveExplanationButton:hover {
-        background-color: #e0a800; /* Darker yellow on hover */
+    #explanationDisplay:empty::before {
+        content: "Your explanation will appear here as you type..."; /* Placeholder text when empty */
+        color: #888;
     }
-    #saveExplanationButton:active {
-        background-color: #c69500; /* Darker on click */
-    }
+
 
 </style>
 </head>
@@ -120,7 +135,9 @@
 
 <div class="container explanation-container">
     <h2>That was Funny now EXPLAIN IT ‼</h2> <textarea id="explanationTextarea" placeholder="Type your explanation here..."></textarea>
-    <button id="saveExplanationButton">Save Explanation (in your browser)</button>
+</div>
+
+<div id="explanationDisplay" class="container">
 </div>
 
 
@@ -136,23 +153,13 @@
         revealButton.style.display = 'none';
     });
 
-    // --- Explanation Save/Load Script ---
+    // --- Explanation Display Script ---
     const explanationTextarea = document.getElementById('explanationTextarea');
-    const saveExplanationButton = document.getElementById('saveExplanationButton');
-    const localStorageKey = 'jokeExplanation'; // Key to use in localStorage
+    const explanationDisplay = document.getElementById('explanationDisplay');
 
-    // Load saved explanation when the page loads
-    window.addEventListener('load', () => {
-        const savedExplanation = localStorage.getItem(localStorageKey);
-        if (savedExplanation) {
-            explanationTextarea.value = savedExplanation;
-        }
-    });
-
-    // Save explanation when the button is clicked
-    saveExplanationButton.addEventListener('click', () => {
-        localStorage.setItem(localStorageKey, explanationTextarea.value);
-        alert('Explanation saved in your browser!'); // Provide feedback
+    // Display explanation as the user types
+    explanationTextarea.addEventListener('input', () => {
+        explanationDisplay.textContent = explanationTextarea.value;
     });
 
 </script>
