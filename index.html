@@ -3,83 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Joke Title Here</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0; /* Optional: Light grey background */
-            text-align: center;
-        }
-        .joke-container {
-            background-color: #fff; /* Optional: White background for the joke box */
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Subtle shadow */
-            max-width: 80%;
-            word-wrap: break-word; /* Ensures long jokes wrap */
-        }
-        h1 {
-            color: #333;
-        }
-        p {
-            font-size: 1.2em;
-            line-height: 1.6;
-        }
-        #punchline-text { /* Style for the punchline text */
-            font-weight: bold;
-            color: #007bff; /* Optional: Highlight color for the punchline */
-        }
-        #punchline { /* Style for the punchline container */
-            margin-top: 20px;
-        }
-        .hidden {
-            display: none; /* Style to hide the punchline initially */
-        }
-        button {
-            margin-top: 15px;
-            padding: 10px 20px;
-            font-size: 1em;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            background-color: #007bff;
-            color: white;
-            transition: background-color 0.3s ease;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+    <title>The Burger Joke</title> <style>
+    body {
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0; /* Light grey background */
+        text-align: center;
+        padding: 20px; /* Add some padding */
+        box-sizing: border-box; /* Include padding in element's total width and height */
+    }
+    .joke-container {
+        background-color: #fff; /* White background for the joke box */
+        padding: 30px; /* Increased padding */
+        border-radius: 10px; /* Slightly more rounded corners */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* More prominent shadow */
+        max-width: 90%; /* Allow it to take more width on smaller screens */
+        width: 500px; /* Max width on larger screens */
+        word-wrap: break-word; /* Ensures long jokes wrap */
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #333;
+        margin-bottom: 20px; /* Space below heading */
+    }
+    p {
+        font-size: 1.3em; /* Slightly larger text */
+        line-height: 1.7;
+        color: #555;
+        margin-bottom: 15px; /* Space below setup */
+    }
+    #punchline-text {
+        font-weight: bold;
+        color: #28a745; /* A green color for the punchline */
+    }
+    #punchline {
+        margin-top: 20px;
+        /* --- Styles for hiding and transition --- */
+        opacity: 0; /* Start completely transparent */
+        visibility: hidden; /* Hide from view and screen readers initially */
+        transition: opacity 0.8s ease-in-out; /* Smooth fade transition over 0.8 seconds */
+        /* You don't typically transition 'visibility' directly,
+           but changing it in tandem with opacity works for showing. */
+    }
+    /* Class to make the punchline visible */
+    #punchline.visible {
+        opacity: 1; /* Make it fully visible */
+        visibility: visible; /* Make it visible */
+    }
+
+    button {
+        margin-top: 25px; /* More space above button */
+        padding: 12px 25px; /* Larger button padding */
+        font-size: 1.1em;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: white;
+        transition: background-color 0.3s ease;
+        outline: none; /* Remove focus outline */
+    }
+    button:hover {
+        background-color: #0056b3;
+    }
+    button:active {
+        background-color: #004085; /* Darker on click */
+    }
+</style>
 </head>
 <body>
 <div class="joke-container">
-    <h1>Your Joke Title or Setup</h1>
-    <p>
-        This is where the setup of your joke goes.
-        Like: Why did the scarecrow win an award?
-    </p>
-    <div id="punchline" class="hidden">
+    <h1>The Burger Joke</h1> <p>
+    WHat do you call a Burger with no bun?
+</p>
+    <div id="punchline">
         <p id="punchline-text">
-            This is where the punchline goes.
-            Like: Because he was outstanding in his field!
-        </p>
+            SNOOP DOGG ICE CREAM 😂😂 </p>
     </div>
-    <button id="revealButton">Reveal Punchline</button>
-</div>
+    <button id="revealButton">Tell me!</button> </div>
 
 <script>
     const revealButton = document.getElementById('revealButton');
     const punchlineDiv = document.getElementById('punchline');
 
     revealButton.addEventListener('click', () => {
-        punchlineDiv.classList.remove('hidden');
-        revealButton.style.display = 'none'; // Hide the button after clicking
+        // Add the 'visible' class to trigger the CSS transition
+        punchlineDiv.classList.add('visible');
+        // Hide the button after clicking
+        revealButton.style.display = 'none';
     });
 </script>
 </body>
