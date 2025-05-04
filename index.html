@@ -119,6 +119,22 @@
         color: #888;
     }
 
+    /* --- Style for hiding the entire explanation section --- */
+    #explanationSection {
+        opacity: 0; /* Start completely transparent */
+        visibility: hidden; /* Hide from view and screen readers initially */
+        transition: opacity 0.8s ease-in-out; /* Match punchline fade transition */
+        display: flex; /* Use flex to keep children in a column */
+        flex-direction: column;
+        align-items: center; /* Center children */
+    }
+
+    /* Class to make the explanation section visible */
+    #explanationSection.visible {
+        opacity: 1; /* Make it fully visible */
+        visibility: visible; /* Make it visible */
+    }
+
 
 </style>
 </head>
@@ -133,11 +149,13 @@
     </div>
     <button id="revealButton">Tell me!</button> </div>
 
-<div class="container explanation-container">
-    <h2>That was Funny now EXPLAIN IT ‼</h2> <textarea id="explanationTextarea" placeholder="Type your explanation here..."></textarea>
-</div>
+<div id="explanationSection">
+    <div class="container explanation-container">
+        <h2>That was Funny now EXPLAIN IT ‼</h2> <textarea id="explanationTextarea" placeholder="Type your explanation here..."></textarea>
+    </div>
 
-<div id="explanationDisplay" class="container">
+    <div id="explanationDisplay" class="container">
+    </div>
 </div>
 
 
@@ -145,12 +163,26 @@
     // --- Joke Reveal Script ---
     const revealButton = document.getElementById('revealButton');
     const punchlineDiv = document.getElementById('punchline');
+    // Get the new explanation section wrapper
+    const explanationSection = document.getElementById('explanationSection');
 
     revealButton.addEventListener('click', () => {
-        // Add the 'visible' class to trigger the CSS transition
+        // Add the 'visible' class to trigger the CSS transition for the punchline
         punchlineDiv.classList.add('visible');
         // Hide the button after clicking
         revealButton.style.display = 'none';
+
+        // --- Reveal the Explanation Section after a slight delay (optional) ---
+        // A slight delay can make the transitions look smoother,
+        // revealing the punchline, then the explanation section.
+        // Adjust the delay time (in milliseconds) as needed.
+        // If you want them to appear at the same time, remove the setTimeout.
+        setTimeout(() => {
+            explanationSection.classList.add('visible');
+        }, 500); // Reveal explanation section after 0.5 seconds
+        // If you want it instantly after punchline:
+        // explanationSection.classList.add('visible');
+
     });
 
     // --- Explanation Display Script ---
