@@ -193,19 +193,9 @@
     const darkModeToggle = document.getElementById('darkModeToggle');
 
     revealButton.addEventListener('click', () => {
-        punchlineDiv.classList.add('visible');
+        punchlineDiv.style.opacity = '1';
+        punchlineDiv.style.visibility = 'visible';
         revealButton.style.display = 'none';
-        setTimeout(() => {
-            explanationSection.classList.add('visible');
-        }, 500);
-    });
-
-    explanationTextarea.addEventListener('input', () => {
-        explanationDisplay.textContent = explanationTextarea.value;
-    });
-
-    darkModeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
     });
 </script>
 </body>
