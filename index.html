@@ -64,10 +64,7 @@
             visibility: hidden;
             transition: opacity 0.8s ease-in-out;
         }
-        #punchline.visible {
-            opacity: 1;
-            visibility: visible;
-        }
+
         button {
             margin-top: 25px;
             padding: 12px 25px;
@@ -130,16 +127,19 @@
             flex-direction: column;
             align-items: center;
         }
-        #explanationSection.visible {
-            opacity: 1;
-            visibility: visible;
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
         }
 
         /* Dark mode styles */
-        body.dark-mode {
-            background-color: #121212;
-            color: #ffffff;
-        }
         body.dark-mode .container {
             background-color: #1e1e1e;
             color: #ffffff;
@@ -168,13 +168,12 @@
     <button id="revealButton">Tell me!</button>
 </div>
 
-<div id="explanationSection">
-    <div class="container explanation-container">
-        <h2>THAT WAS FUNNY NOW EXPLAIN IT CHERI (PartyRock32)‼</h2>
-        <textarea id="explanationTextarea" placeholder="Type your explanation here..."></textarea>
-    </div>
-    <div id="explanationDisplay" class="container" aria-live="polite"></div>
+<div class="container explanation-container">
+    <h2>THAT WAS FUNNY NOW EXPLAIN IT CHERI (PartyRock32)‼</h2>
+    <label for="explanationTextarea" class="visually-hidden">Explanation</label>
+    <textarea id="explanationTextarea" placeholder="Type your explanation here..."></textarea>
 </div>
+    <div id="explanationDisplay" class="container" aria-live="polite"></div>
 
 <script>
     const revealButton = document.getElementById('revealButton');
