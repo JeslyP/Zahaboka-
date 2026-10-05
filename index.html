@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inside Joke for 🥑</title>
     <style>
+        :root {
+            --pink: #ff6fb5;
+            --pink-dark: #e0559c;
+            --pink-light: #ffd6ec;
+            --purple: #8e44ad;
+            --purple-dark: #6c3483;
+            --purple-light: #e8d5f5;
+            --text: #4a235a;
+            --text-soft: #6c4a7d;
+        }
         html, body {
             width: 100%;
             max-width: 100%;
@@ -21,16 +31,19 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background: linear-gradient(135deg, var(--pink-light) 0%, var(--purple-light) 100%);
+            background-attachment: fixed;
             text-align: center;
             padding: 20px;
             box-sizing: border-box;
+            color: var(--text);
         }
         .container {
             background-color: #fff;
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            border-radius: 16px;
+            border: 2px solid var(--pink-light);
+            box-shadow: 0 6px 18px rgba(142, 68, 173, 0.25);
             max-width: 90%;
             width: 500px;
             word-wrap: break-word;
@@ -38,7 +51,7 @@
             margin-bottom: 20px;
         }
         h1, h2 {
-            color: #333;
+            color: var(--purple);
         }
         h1 {
             margin-bottom: 20px;
@@ -51,12 +64,12 @@
         p {
             font-size: 1.3em;
             line-height: 1.7;
-            color: #555;
+            color: var(--text-soft);
             margin-bottom: 15px;
         }
         #punchline-text {
             font-weight: bold;
-            color: #28a745;
+            color: var(--pink-dark);
         }
         #punchline {
             margin-top: 20px;
@@ -71,17 +84,21 @@
             font-size: 1.1em;
             cursor: pointer;
             border: none;
-            border-radius: 5px;
-            background-color: #28a745;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--pink) 0%, var(--purple) 100%);
             color: white;
-            transition: background-color 0.3s ease;
+            transition: filter 0.3s ease, transform 0.1s ease;
             outline: none;
         }
         button:hover {
-            background-color: #218838;
+            filter: brightness(1.1);
         }
         button:active {
-            background-color: #1e7e34;
+            transform: scale(0.97);
+            filter: brightness(0.95);
+        }
+        button:focus-visible {
+            box-shadow: 0 0 0 3px var(--purple-light), 0 0 0 5px var(--purple);
         }
         textarea {
             width: calc(100% - 20px);
@@ -89,8 +106,8 @@
             padding: 10px;
             margin-top: 10px;
             margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            border: 1px solid var(--pink);
+            border-radius: 8px;
             font-family: sans-serif;
             font-size: 1em;
             resize: vertical;
@@ -102,11 +119,11 @@
         #explanationDisplay {
             margin-top: 20px;
             padding: 20px;
-            background-color: #e9ecef;
-            border: 1px dashed #ced4da;
-            border-radius: 8px;
+            background-color: #fdf0f8;
+            border: 1px dashed var(--purple);
+            border-radius: 12px;
             text-align: left;
-            color: #495057;
+            color: var(--text);
             line-height: 1.6;
             min-height: 1.6em;
             word-wrap: break-word;
@@ -117,7 +134,7 @@
         }
         #explanationDisplay:empty::before {
             content: "Your explanation will appear here as you type...";
-            color: #888;
+            color: #a07cb5;
         }
         #explanationSection {
             opacity: 0;
@@ -139,19 +156,98 @@
             border: 0;
         }
 
+        /* Passcode gate */
+        #gate {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 40px);
+            width: 100%;
+        }
+        #gate form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #passcodeInput {
+            width: 100%;
+            max-width: 280px;
+            padding: 12px 16px;
+            font-size: 1.1em;
+            border: 2px solid var(--pink);
+            border-radius: 999px;
+            text-align: center;
+            outline: none;
+            box-sizing: border-box;
+            color: var(--text);
+        }
+        #passcodeInput:focus {
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px var(--purple-light);
+        }
+        .hint {
+            font-size: 1em;
+            color: var(--purple);
+            font-style: italic;
+            margin: 10px 0 0;
+        }
+        #gateError {
+            font-size: 1em;
+            color: var(--pink-dark);
+            min-height: 1.4em;
+            margin: 12px 0 0;
+        }
+        .shake {
+            animation: shake 0.4s;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        #site[hidden], #gate[hidden] {
+            display: none;
+        }
+        #site {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
         /* Dark mode styles */
+        body.dark-mode {
+            background: linear-gradient(135deg, #2a0f2e 0%, #1b0a2b 100%);
+            background-attachment: fixed;
+            color: #f5d9ef;
+        }
         body.dark-mode .container {
-            background-color: #1e1e1e;
-            color: #ffffff;
+            background-color: #2d1838;
+            border-color: #5b2a6e;
+            color: #f5d9ef;
         }
-        body.dark-mode button {
-            background-color: #28a745;
+        body.dark-mode h1,
+        body.dark-mode h2 {
+            color: #e5a3ff;
         }
-        body.dark-mode button:hover {
-            background-color: #218838;
+        body.dark-mode p {
+            color: #f0c6e4;
         }
-        body.dark-mode button:active {
-            background-color: #1e7e34;
+        body.dark-mode #punchline-text {
+            color: #ff8cc6;
+        }
+        body.dark-mode textarea,
+        body.dark-mode #passcodeInput {
+            background-color: #1f0f28;
+            color: #f5d9ef;
+        }
+        body.dark-mode #explanationDisplay {
+            background-color: #3a1f48;
+            color: #f5d9ef;
+        }
+        body.dark-mode .hint {
+            color: #e5a3ff;
         }
         #punchline.visible {
         opacity: 1;
@@ -165,6 +261,20 @@
     </style>
 </head>
 <body>
+<div id="gate">
+    <div class="container">
+        <h1>🔒 Enter Passcode</h1>
+        <form id="gateForm" autocomplete="off">
+            <label for="passcodeInput" class="visually-hidden">Passcode</label>
+            <input type="password" id="passcodeInput" placeholder="Passcode" autofocus>
+            <p class="hint">💡 Hint: your nickname</p>
+            <button type="submit" id="enterButton">Enter 💜</button>
+            <p id="gateError" aria-live="polite"></p>
+        </form>
+    </div>
+</div>
+
+<div id="site" hidden>
 <button id="darkModeToggle">Toggle Dark Mode</button>
 <div class="container joke-container">
     <h1>Zahboka</h1>
@@ -183,8 +293,31 @@
     <textarea id="explanationTextarea" placeholder="Type your explanation here..."></textarea>
 </div>
     <div id="explanationDisplay" class="container" aria-live="polite"></div>
+</div>
 
 <script>
+    const PASSCODE = 'nica';
+
+    const gate = document.getElementById('gate');
+    const gateForm = document.getElementById('gateForm');
+    const passcodeInput = document.getElementById('passcodeInput');
+    const gateError = document.getElementById('gateError');
+    const site = document.getElementById('site');
+
+    gateForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        if (passcodeInput.value.trim().toLowerCase() === PASSCODE) {
+            gate.hidden = true;
+            site.hidden = false;
+        } else {
+            gateError.textContent = 'Wrong passcode, try again 💔';
+            gateForm.classList.remove('shake');
+            void gateForm.offsetWidth;
+            gateForm.classList.add('shake');
+            passcodeInput.select();
+        }
+    });
+
     const revealButton = document.getElementById('revealButton');
     const punchlineDiv = document.getElementById('punchline');
     const explanationSection = document.getElementById('explanationSection');
@@ -196,6 +329,10 @@
         punchlineDiv.style.opacity = '1';
         punchlineDiv.style.visibility = 'visible';
         revealButton.style.display = 'none';
+    });
+
+    darkModeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
     });
 </script>
 </body>
