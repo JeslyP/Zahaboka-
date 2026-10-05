@@ -1,6 +1,6 @@
 // Keeps the app shell available offline and lets the site be installed as an app.
 // Uses network-first so updates show up right away; the cache is only a fallback.
-const CACHE = 'jn-shell-v2';
+const CACHE = 'jn-shell-v3';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -29,14 +29,32 @@ self.addEventListener('fetch', (event) => {
     );
 });
 
+// Push notifications sent by the "notify" server function when the other person adds something.
+self.addEventListener('push', (event) => {
+    let data = {};
+    try { data = event.data ? event.data.json() : {}; } catch (err) { data = { body: event.data && event.data.text() }; }
+    event.waitUntil(self.registration.showNotification(data.title || 'Jes & Nica 💜', {
+        body: data.body || '',
+        icon: 'icons/icon-192.png?v=2',
+        badge: 'icons/favicon-48.png?v=2',
+        tag: data.tag || 'jn-update',
+        renotify: true,
+        data: { url: data.url || './' },
+    }));
+});
+
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
+    const target = new URL((event.notification.data && event.notification.data.url) || './', self.registration.scope).href;
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
             for (const client of clients) {
-                if ('focus' in client) return client.focus();
+                if ('focus' in client) {
+                    client.postMessage({ type: 'open', url: target });
+                    return client.focus();
+                }
             }
-            return self.clients.openWindow('./');
+            return self.clients.openWindow(target);
         })
     );
 });

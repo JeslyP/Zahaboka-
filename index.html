@@ -440,7 +440,18 @@
 
 <!-- Music player -->
 <button id="musicBtn" class="music-btn" hidden title="Play our song">🎵</button>
-<div id="musicHost" hidden></div>
+<div id="musicPlayer" class="music-player" hidden>
+    <div class="mp-head">
+        <b>🎵 Our Song</b>
+        <span>
+            <button class="icon" id="musicMinimize" title="Hide player (music keeps playing)">▾</button>
+            <button class="icon" id="musicClose" title="Stop and close">✕</button>
+        </span>
+    </div>
+    <div class="mp-frame"><div id="musicFrame"></div></div>
+    <p class="small" id="musicMsg"></p>
+    <a id="musicOpen" class="small" target="_blank" rel="noopener" hidden>▶ Open in YouTube</a>
+</div>
 
 <!-- Fullscreen slideshow / image viewer -->
 <div id="fullscreenShow" hidden>

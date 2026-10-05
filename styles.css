@@ -558,4 +558,24 @@ summary { cursor: pointer; color: var(--purple); }
 }
 .music-btn.playing { animation: pulse 1.5s infinite; }
 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-#musicHost { position: fixed; width: 1px; height: 1px; overflow: hidden; left: -10px; bottom: 0; }
+.music-player {
+    position: fixed;
+    right: 16px;
+    bottom: calc(80px + env(safe-area-inset-bottom));
+    width: min(320px, calc(100vw - 32px));
+    background: var(--card);
+    border: 2px solid var(--card-border);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(142, 68, 173, 0.35);
+    padding: 10px;
+    z-index: 850;
+    text-align: left;
+}
+/* Minimized: moved off-screen but still rendered, so the music keeps playing. */
+.music-player.minimized { right: auto; left: -10000px; }
+.mp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; color: var(--purple); }
+.mp-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; }
+.mp-frame iframe, .mp-frame > div { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.mp-frame audio { position: absolute; bottom: 0; width: 100%; }
+.music-player .small { margin: 6px 0 0; }
+#musicOpen { display: inline-block; margin-top: 4px; font-weight: bold; }

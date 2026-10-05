@@ -285,6 +285,7 @@ $('switchUser').addEventListener('click', () => {
     renderChat();
     updateBadges();
     loadDaily();
+    syncPushSub();
     const panel = currentPanel[currentSection];
     if (panel && loaders[panel]) loaders[panel]();
 });
@@ -346,11 +347,12 @@ function enterSite() {
         gate.hidden = true;
         site.hidden = false;
         applyUser();
-        window.scrollTo(0, 0);
+        if (!openFromHash()) window.scrollTo(0, 0);
     });
     seenId = Number(store.get(`jn_seen_${me}`) || 0);
     loadHome();
     loadSettings();
+    syncPushSub();
 }
 
 // ================= Anniversary counter =================
@@ -726,6 +728,7 @@ $('uploadBtn').addEventListener('click', async () => {
         }
     }
     setStatus('uploadStatus', `Uploaded ${added} photo${added === 1 ? '' : 's'} 💜` + (failed ? ` (${failed} failed)` : ''));
+    if (added) notifyOther(`📸 ${me} added ${added} photo${added === 1 ? '' : 's'}`, caption || `New in ${album}`, './#memories:photos', 'jn-photos');
     $('photoInput').value = '';
     $('photoCaptionInput').value = '';
     $('uploadBtn').disabled = false;
@@ -793,8 +796,9 @@ $('milestoneForm').addEventListener('submit', async (e) => {
                 taken_on: $('msDate').value,
             });
         }
+        const title = $('msTitle').value.trim();
         await rpc('add_milestone', {
-            title: $('msTitle').value.trim(),
+            title,
             happened_on: $('msDate').value,
             story: $('msStory').value,
             photo_id: photoId,
@@ -802,6 +806,7 @@ $('milestoneForm').addEventListener('submit', async (e) => {
         });
         $('milestoneForm').reset();
         setStatus('msStatus', 'Added to our timeline 💜');
+        notifyOther(`🌟 ${me} added to our timeline`, title, './#memories:timeline', 'jn-timeline');
         loadMilestones();
     } catch (err) {
         setStatus('msStatus', "Couldn't add that. Try again.");
@@ -813,7 +818,6 @@ $('milestoneForm').addEventListener('submit', async (e) => {
 // ================= Chat =================
 let messages = [];
 let seenId = 0;
-let notifiedId = null;
 let openReactFor = null;
 let pendingChatPhoto = null;
 const chatLog = $('chatLog');
@@ -862,6 +866,7 @@ function messageBubble(m, { compact = false } = {}) {
                 if (me === 'Jes') m.react_jes = value || null; else m.react_nica = value || null;
                 renderChat();
                 await rpc('react_message', { msg_id: m.id, who: me, emoji: value }).catch(() => {});
+                if (value && m.author !== me) notifyOther(`${value} ${me} reacted`, m.body || 'to your photo', './#us:chat', 'jn-chat');
             });
             bar.append(b);
         }
@@ -934,7 +939,6 @@ async function loadChat() {
             lastChatSignature = signature;
             renderChat();
         }
-        maybeNotify();
         if (isPanelOpen('us', 'chat') && document.visibilityState === 'visible') markChatSeen();
         else updateBadges();
         setStatus('chatStatus', '');
@@ -973,6 +977,7 @@ $('chatForm').addEventListener('submit', async (e) => {
             photoId = await rpc('add_photo', { caption: body, data: pendingChatPhoto, author: me, album: 'Chat', taken_on: todayStr() });
         }
         await rpc('add_message', { author: me, body, photo_id: photoId });
+        notifyOther(`💬 ${me}`, body || '📷 Sent a photo', './#us:chat', 'jn-chat');
         $('chatInput').value = '';
         pendingChatPhoto = null;
         $('chatAttachPreview').hidden = true;
@@ -1006,55 +1011,105 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // ================= Notifications =================
-function notificationsOn() {
-    return store.get('jn_notify') === '1' && 'Notification' in window && Notification.permission === 'granted';
+// Real push notifications: each device subscribes once, and whenever one of us adds
+// something, the "notify" server function pushes a notification to the other person's devices.
+const VAPID_PUBLIC_KEY = 'BMcJWvXqpxCKBybhyyLHhTX4CIDx9AbmWyy2-48EoM1UPeROOhrgX1KyMZS3Ru7dWSLsYwynDfc0PSMfoAY_IGY';
+const NOTIFY_URL = `${SUPABASE_URL}/functions/v1/notify`;
+const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && window.isSecureContext;
+
+function urlBase64ToUint8Array(base64) {
+    const padded = (base64 + '='.repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+    return Uint8Array.from(atob(padded), (c) => c.charCodeAt(0));
 }
 
-function maybeNotify() {
-    const fromOther = messages.filter((m) => m.author !== me);
-    const maxId = fromOther.length ? fromOther[fromOther.length - 1].id : 0;
-    if (notifiedId === null) {
-        notifiedId = maxId; // don't notify for messages that existed before this visit
-        return;
-    }
-    const fresh = fromOther.filter((m) => m.id > notifiedId);
-    notifiedId = Math.max(notifiedId, maxId);
-    if (!fresh.length || !notificationsOn() || document.visibilityState === 'visible') return;
-    const last = fresh[fresh.length - 1];
-    const title = `💌 ${last.author}`;
-    const options = { body: last.body || '📷 Sent a photo', icon: 'icons/icon-192.png?v=2', badge: 'icons/favicon-48.png?v=2', tag: 'jn-chat' };
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.ready.then((reg) => reg.showNotification(title, options)).catch(() => {});
-    } else {
-        try { new Notification(title, options); } catch (err) {}
-    }
+async function currentPushSub() {
+    if (!pushSupported()) return null;
+    const reg = await navigator.serviceWorker.ready;
+    return reg.pushManager.getSubscription();
 }
 
-function renderNotifyState() {
-    if (!('Notification' in window)) {
-        $('notifyBtn').hidden = true;
+// Tell the other person's devices that something happened. Never blocks or breaks the action itself.
+function notifyOther(title, body, url = './', tag = 'jn-update') {
+    fetch(NOTIFY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p: passcode, from: me, title, body: String(body || '').slice(0, 300), url, tag }),
+        keepalive: true,
+    }).catch(() => {});
+}
+
+// Re-save this device's subscription under the current name (after switching user or on each visit).
+async function syncPushSub() {
+    try {
+        const sub = await currentPushSub();
+        if (sub) await rpc('save_push_sub', { person: me, sub: sub.toJSON() });
+    } catch (err) {}
+}
+
+async function renderNotifyState() {
+    const btn = $('notifyBtn');
+    if (!pushSupported()) {
+        btn.hidden = true;
         setStatus('notifyStatus', isIOS() && !isStandalone()
-            ? 'On iPhone, install the app first (see below), then turn notifications on from inside the app.'
+            ? 'On iPhone, install the app first (see below), then open it from your home screen and turn notifications on there.'
             : "This browser doesn't support notifications.");
         return;
     }
-    const on = notificationsOn();
-    $('notifyBtn').textContent = on ? 'Turn off notifications' : 'Turn on notifications';
+    btn.hidden = false;
+    const sub = await currentPushSub().catch(() => null);
+    btn.textContent = sub ? 'Turn off notifications' : 'Turn on notifications';
     setStatus('notifyStatus', Notification.permission === 'denied'
-        ? 'Notifications are blocked in your browser settings for this site.'
-        : on ? 'Notifications are on 🔔' : '');
+        ? 'Notifications are blocked in your phone/browser settings for this site.'
+        : sub ? `Notifications are on 🔔 You'll hear about everything ${other()} adds.` : '');
 }
+
 $('notifyBtn').addEventListener('click', async () => {
-    if (notificationsOn()) {
-        store.set('jn_notify', '0');
-    } else {
-        const result = await Notification.requestPermission();
-        store.set('jn_notify', result === 'granted' ? '1' : '0');
+    const btn = $('notifyBtn');
+    btn.disabled = true;
+    try {
+        const existing = await currentPushSub();
+        if (existing) {
+            await rpc('delete_push_sub', { endpoint: existing.endpoint }).catch(() => {});
+            await existing.unsubscribe();
+        } else {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                const reg = await navigator.serviceWorker.ready;
+                const sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+                });
+                await rpc('save_push_sub', { person: me, sub: sub.toJSON() });
+            }
+        }
+    } catch (err) {
+        setStatus('notifyStatus', "Couldn't change notifications. Try again.");
+        btn.disabled = false;
+        return;
     }
+    btn.disabled = false;
     renderNotifyState();
 });
 
+// Open the right page when a notification is tapped (links look like "./#us:chat").
+function openFromHash(hash = location.hash) {
+    const m = /^#(home|memories|us|plans|settings)(?::(\w+))?$/.exec(hash || '');
+    if (!m) return false;
+    if (m[2]) currentPanel[m[1]] = m[2];
+    showSection(m[1]);
+    window.scrollTo(0, 0);
+    history.replaceState(null, '', location.pathname);
+    return true;
+}
+if (navigator.serviceWorker) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'open' && !site.hidden) openFromHash(new URL(event.data.url).hash);
+    });
+}
+window.addEventListener('hashchange', () => { if (!site.hidden) openFromHash(); });
+
 // ================= Daily question =================
+let partnerAnsweredToday = false;
 async function loadDaily() {
     const d = todayStr();
     const question = DAILY_QUESTIONS[dailyIndex(d)];
@@ -1064,6 +1119,7 @@ async function loadDaily() {
         const rows = await rpc('get_daily', { viewer: me, d });
         const mine = rows.find((r) => r.author === me);
         const theirs = rows.find((r) => r.author !== me);
+        partnerAnsweredToday = !!theirs;
         if (mine && document.activeElement !== $('dailyAnswer')) $('dailyAnswer').value = mine.answer || '';
         const box = $('dailyPartner');
         box.innerHTML = '';
@@ -1110,6 +1166,9 @@ $('dailyForm').addEventListener('submit', async (e) => {
     if (!answer) return;
     try {
         await rpc('answer_daily', { d: todayStr(), author: me, answer });
+        notifyOther(`❓ ${me} answered today's question`,
+            partnerAnsweredToday ? "You've both answered. Come see each other's answers 💕" : 'Answer too to see what they said 👀',
+            './#us:daily', 'jn-daily');
         setStatus('dailyStatus', 'Saved 💜');
         $('dailyAnswer').blur();
         loadDaily();
@@ -1160,8 +1219,10 @@ function renderMoodPicker() {
 }
 
 async function saveMood(emoji) {
+    const hadMood = moods.some((m) => m.mood_date === todayStr() && m.author === me);
     try {
         await rpc('set_mood', { d: todayStr(), author: me, emoji, note: $('moodNote').value });
+        if (!hadMood) notifyOther(`${emoji} ${me} is feeling ${emoji} today`, $('moodNote').value || 'Check in on them 💕', './#us:mood', 'jn-mood');
         setStatus('moodStatus', `Saved ${emoji}`);
         loadMoods();
     } catch (err) {
@@ -1297,13 +1358,15 @@ loaders.letters = loadLetters;
 $('letterForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
+        const unlockOn = $('letterUnlock').value || null;
         await rpc('add_letter', {
             title: $('letterTitle').value.trim(),
             body: $('letterBody').value.trim(),
-            unlock_on: $('letterUnlock').value || null,
+            unlock_on: unlockOn,
             written_by: me,
             written_for: other(),
         });
+        notifyOther(`💌 ${me} wrote you a letter`, unlockOn ? `"${$('letterTitle').value.trim()}" 🔒 unlocks ${formatDate(unlockOn)}` : `"${$('letterTitle').value.trim()}"`, './#us:letters', 'jn-letters');
         $('letterForm').reset();
         setStatus('letterStatus', `Sealed and sent to ${other()} 💌`);
         loadLetters();
@@ -1364,6 +1427,7 @@ $('reasonForm').addEventListener('submit', async (e) => {
     if (!text) return;
     try {
         await rpc('add_reason', { reason: text, author: me });
+        notifyOther(`🫙 ${me} added a reason to the jar`, 'Tap the jar to find out why they love you 💗', './#us:reasons', 'jn-reasons');
         $('reasonInput').value = '';
         setStatus('reasonStatus', 'Added to the jar 🫙');
         loadReasons();
@@ -1402,7 +1466,8 @@ async function loadQuiz() {
                     else if (option === q.my_guess) b.classList.add('wrong');
                 } else {
                     b.addEventListener('click', async () => {
-                        await rpc('answer_quiz', { quiz_id: q.id, guesser: me, guess: option }).catch(() => {});
+                        const correct = await rpc('answer_quiz', { quiz_id: q.id, guesser: me, guess: option }).catch(() => null);
+                        if (correct !== null) notifyOther(`🧠 ${me} answered your question ${correct ? '✅' : '❌'}`, q.question, './#us:quiz', 'jn-quiz');
                         loadQuiz();
                     });
                 }
@@ -1445,6 +1510,7 @@ $('quizForm').addEventListener('submit', async (e) => {
     }
     try {
         await rpc('add_quiz', { author: me, question: $('quizQuestion').value.trim(), answer: $('quizAnswer').value.trim(), decoys });
+        notifyOther(`🧠 ${me} wrote a quiz question`, $('quizQuestion').value.trim(), './#us:quiz', 'jn-quiz');
         $('quizForm').reset();
         setStatus('quizStatus', 'Question added 🧠');
         loadQuiz();
@@ -1482,6 +1548,7 @@ $('todoForm').addEventListener('submit', async (e) => {
     if (!text) return;
     try {
         await rpc('add_todo', { todo_text: text, author: me });
+        notifyOther(`✅ ${me} added a to-do`, text, './#plans:todos', 'jn-todos');
         $('todoInput').value = '';
         loadTodos();
     } catch (err) {
@@ -1539,12 +1606,14 @@ $('activityForm').addEventListener('submit', async (e) => {
     const title = $('activityTitle').value.trim();
     if (!title) return;
     try {
+        const plannedFor = $('activityDate').value || null;
         await rpc('add_activity', {
             title,
             notes: $('activityNotes').value.trim(),
-            planned_for: $('activityDate').value || null,
+            planned_for: plannedFor,
             author: me,
         });
+        notifyOther(`🎡 ${me} added an activity`, plannedFor ? `${title} · ${formatDate(plannedFor)}` : title, './#plans:activities', 'jn-activities');
         $('activityForm').reset();
         loadActivities();
     } catch (err) {
@@ -1616,13 +1685,16 @@ loaders.countdowns = loadCountdowns;
 $('countdownForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
+        const cdTitle = $('cdTitle').value.trim();
         await rpc('add_countdown', {
-            title: $('cdTitle').value.trim(),
+            title: cdTitle,
             emoji: $('cdEmoji').value.trim(),
             target_date: $('cdDate').value,
             yearly: $('cdYearly').checked,
             author: me,
         });
+        const next = nextOccurrence($('cdDate').value, $('cdYearly').checked);
+        notifyOther(`⏳ ${me} added a countdown`, `${$('cdEmoji').value.trim()} ${cdTitle} · ${formatDate(toDateStr(next))}`.trim(), './#plans:countdowns', 'jn-countdowns');
         $('countdownForm').reset();
         loadCountdowns();
     } catch (err) {
@@ -1738,6 +1810,7 @@ async function ensureMap() {
 async function addPlace(name, lat, lng, visited) {
     try {
         await rpc('add_place', { name, lat, lng, visited, notes: null, author: me });
+        notifyOther(`🗺️ ${me} pinned a place`, `${name} · ${visited ? 'been there 💜' : 'want to go 💗'}`, './#plans:map', 'jn-map');
         $('placeResults').innerHTML = '';
         setStatus('placeStatus', `Added ${name} 📍`);
         loadPlaces();
@@ -1876,44 +1949,101 @@ $('wishForm').addEventListener('submit', async (e) => {
 
 // ================= Our song =================
 let songUrl = '';
-let musicPlaying = false;
+let ytPlayer = null;
+let ytApi = null;
 
 function youTubeId(url) {
     const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/))([\w-]{11})/);
     return m ? m[1] : null;
 }
 
-function stopMusic() {
-    $('musicHost').innerHTML = '';
-    $('musicHost').hidden = true;
-    musicPlaying = false;
-    $('musicBtn').classList.remove('playing');
-    $('musicBtn').textContent = '🎵';
-}
-
-function playMusic() {
-    const host = $('musicHost');
-    host.innerHTML = '';
-    const id = youTubeId(songUrl);
-    if (id) {
-        host.append(el('iframe', {
-            src: `https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}`,
-            allow: 'autoplay; encrypted-media',
-            width: 200,
-            height: 120,
-        }));
-    } else {
-        const audio = el('audio', { src: songUrl, loop: true, autoplay: true });
-        audio.play().catch(() => setStatus('songStatus', "Couldn't play that link. Try a YouTube link."));
-        host.append(audio);
+function loadYouTubeApi() {
+    if (!ytApi) {
+        ytApi = new Promise((resolve, reject) => {
+            if (window.YT && window.YT.Player) return resolve();
+            window.onYouTubeIframeAPIReady = resolve;
+            const script = el('script', { src: 'https://www.youtube.com/iframe_api' });
+            script.onerror = () => { ytApi = null; reject(new Error('YouTube unavailable')); };
+            document.head.append(script);
+        });
     }
-    host.hidden = false;
-    musicPlaying = true;
-    $('musicBtn').classList.add('playing');
-    $('musicBtn').textContent = '⏸';
+    return ytApi;
 }
 
-$('musicBtn').addEventListener('click', () => (musicPlaying ? stopMusic() : playMusic()));
+function setMusicIcon(playing) {
+    $('musicBtn').classList.toggle('playing', playing);
+    $('musicBtn').textContent = playing ? '🎶' : '🎵';
+}
+
+function stopMusic() {
+    if (ytPlayer) { try { ytPlayer.destroy(); } catch (err) {} ytPlayer = null; }
+    $('musicFrame').replaceWith(el('div', { id: 'musicFrame' }));
+    $('musicPlayer').hidden = true;
+    $('musicPlayer').classList.remove('minimized');
+    setMusicIcon(false);
+}
+
+async function openMusic() {
+    const panel = $('musicPlayer');
+    // Already loaded: just show/hide the card without interrupting the song.
+    if (!panel.hidden && (ytPlayer || panel.querySelector('audio'))) {
+        panel.classList.toggle('minimized');
+        return;
+    }
+    panel.hidden = false;
+    panel.classList.remove('minimized');
+    $('musicMsg').textContent = 'Loading…';
+    const id = youTubeId(songUrl);
+    $('musicOpen').hidden = !id;
+    if (id) $('musicOpen').href = `https://www.youtube.com/watch?v=${id}`;
+
+    if (!id) {
+        const audio = el('audio', { src: songUrl, loop: true, controls: true });
+        $('musicFrame').replaceWith(el('div', { id: 'musicFrame' }, [audio]));
+        audio.addEventListener('playing', () => { setMusicIcon(true); $('musicMsg').textContent = ''; });
+        audio.addEventListener('pause', () => setMusicIcon(false));
+        audio.addEventListener('error', () => { $('musicMsg').textContent = "Couldn't play that link. Try a YouTube link instead."; });
+        audio.play().catch(() => { $('musicMsg').textContent = 'Tap ▶ to play.'; });
+        return;
+    }
+
+    try {
+        await loadYouTubeApi();
+    } catch (err) {
+        $('musicMsg').textContent = "Couldn't load YouTube. Use the button below to listen there.";
+        return;
+    }
+    ytPlayer = new YT.Player('musicFrame', {
+        videoId: id,
+        playerVars: { autoplay: 1, loop: 1, playlist: id, playsinline: 1, rel: 0 },
+        events: {
+            onReady: (e) => {
+                e.target.playVideo();
+                // Phones often block sound until you press play yourself.
+                setTimeout(() => {
+                    if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
+                        $('musicMsg').textContent = 'Tap ▶ on the video to start the song.';
+                    }
+                }, 1500);
+            },
+            onStateChange: (e) => {
+                const playing = e.data === YT.PlayerState.PLAYING;
+                setMusicIcon(playing);
+                if (playing) $('musicMsg').textContent = 'Tap ▾ to hide the player. The song keeps playing.';
+            },
+            onError: (e) => {
+                setMusicIcon(false);
+                $('musicMsg').textContent = [101, 150, 153].includes(e.data)
+                    ? "This video's owner doesn't allow it to play on other websites. Open it in YouTube, or save a different upload of the song (a lyrics or audio version usually works)."
+                    : "This video can't be played. Check the link in Settings.";
+            },
+        },
+    });
+}
+
+$('musicBtn').addEventListener('click', openMusic);
+$('musicMinimize').addEventListener('click', () => $('musicPlayer').classList.add('minimized'));
+$('musicClose').addEventListener('click', stopMusic);
 
 function applySong(url) {
     songUrl = (url || '').trim();
@@ -1944,6 +2074,7 @@ $('songForm').addEventListener('submit', async (e) => {
         stopMusic();
         applySong(url);
         setStatus('songStatus', url ? 'Saved! Tap the 🎵 button to play 💜' : 'Song removed.');
+        if (url) notifyOther(`🎵 ${me} set our song`, 'Tap the 🎵 button to listen', './#settings', 'jn-song');
     } catch (err) {
         setStatus('songStatus', "Couldn't save. Try again.");
     }
