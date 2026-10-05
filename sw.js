@@ -1,6 +1,6 @@
 // Keeps the app shell available offline and lets the site be installed as an app.
 // Uses network-first so updates show up right away; the cache is only a fallback.
-const CACHE = 'jn-shell-v1';
+const CACHE = 'jn-shell-v2';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {

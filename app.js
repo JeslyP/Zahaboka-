@@ -1022,7 +1022,7 @@ function maybeNotify() {
     if (!fresh.length || !notificationsOn() || document.visibilityState === 'visible') return;
     const last = fresh[fresh.length - 1];
     const title = `💌 ${last.author}`;
-    const options = { body: last.body || '📷 Sent a photo', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: 'jn-chat' };
+    const options = { body: last.body || '📷 Sent a photo', icon: 'icons/icon-192.png?v=2', badge: 'icons/favicon-48.png?v=2', tag: 'jn-chat' };
     if (navigator.serviceWorker && navigator.serviceWorker.controller) {
         navigator.serviceWorker.ready.then((reg) => reg.showNotification(title, options)).catch(() => {});
     } else {
